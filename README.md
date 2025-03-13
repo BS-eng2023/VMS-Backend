@@ -1,3 +1,5 @@
+Project structure:
+
 Frontend
 
 Bachend
