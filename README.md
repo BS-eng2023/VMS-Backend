@@ -41,43 +41,145 @@ Bachend
 ## Full Project Development Summary
 
 ### 1. **Project Redesign with Classes**
-- The initial JavaScript-based Vehicle Management System was **refactored using ES6 classes** for better modularity.
-- Each vehicle type (cars, motorcycles, trucks) was given a **dedicated class** with inheritance.
+```javascript
+class Vehicle {
+  constructor(model, type, mileage) {
+    this.model = model;
+    this.type = type;
+    this.mileage = mileage;
+  }
+  displayInfo() {
+    return `${this.model} (${this.type}) - Mileage: ${this.mileage}`;
+  }
+}
 
-### 2. **Backend Development**
-We developed multiple backend implementations using different databases:
+class Car extends Vehicle {
+  constructor(model, mileage, seats) {
+    super(model, 'Car', mileage);
+    this.seats = seats;
+  }
+}
 
-✅ **MongoDB (Mongoose)** – NoSQL, document-based, flexible schema.
-✅ **MariaDB (MySQL2)** – SQL, structured, relational.
-✅ **PostgreSQL (pg)** – SQL, powerful for complex queries.
-✅ **CouchDB** – NoSQL, distributed, great for offline sync.
+class Motorcycle extends Vehicle {
+  constructor(model, mileage, hasSidecar) {
+    super(model, 'Motorcycle', mileage);
+    this.hasSidecar = hasSidecar;
+  }
+}
+```
 
-Each backend supports **CRUD operations**, allowing:
-- Adding new vehicles
-- Fetching vehicle lists
-- Updating vehicle details
-- Deleting vehicles
+### 2. **Frontend Methods for API Calls**
+```javascript
+async function fetchVehicles() {
+  const response = await fetch('/vehicles');
+  return await response.json();
+}
 
-### 3. **Frontend Integration with CRUD APIs**
-- The frontend makes **REST API calls** to interact with the backend.
-- Used **fetch()** and **async/await** to handle data retrieval and form submissions.
-- Depending on the database, **data formatting and error handling** differ slightly (e.g., SQL uses structured responses, while NoSQL can return nested documents).
+async function addVehicle(vehicle) {
+  await fetch('/vehicles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(vehicle),
+  });
+}
+```
 
-### 4. **Extending to Motorcycles & Trucks**
-- The system was extended to handle **motorcycles and trucks** by updating:
-  - **Database schemas/tables**
-  - **Class-based models in the frontend**
-  - **API endpoints to differentiate vehicle types**
+---
 
-### 5. **Database Comparison for Frontend Impact**
-- MongoDB & CouchDB allow **flexible JSON structures**, making frontend development easier.
-- MariaDB & PostgreSQL enforce strict schemas, requiring **form validation adjustments**.
-- CouchDB has **offline sync with PouchDB**, beneficial for mobile/web hybrid apps.
+## 3. **Backend Implementations for Four Databases**
 
-### 6. **Final Recommendations**
-- **Use MongoDB** for scalable, flexible applications.
-- **Use MariaDB** if relational integrity is critical.
-- **Use PostgreSQL** for advanced querying needs.
-- **Use CouchDB** for offline-first applications.
+### **MongoDB (Mongoose) Backend**
+```javascript
+const mongoose = require('mongoose');
+const express = require('express');
+const Vehicle = require('./models/Vehicle');
 
-🚀 **Let me know if you need additional improvements or documentation formatting!**
+mongoose.connect('mongodb://localhost:27017/vehicles', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const app = express();
+app.use(express.json());
+
+app.post('/vehicles', async (req, res) => {
+  const vehicle = new Vehicle(req.body);
+  await vehicle.save();
+  res.send(vehicle);
+});
+
+app.get('/vehicles', async (req, res) => {
+  const vehicles = await Vehicle.find();
+  res.send(vehicles);
+});
+```
+
+### **MariaDB (MySQL2) Backend**
+```javascript
+const mysql = require('mysql2');
+const express = require('express');
+
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'vehicles_db'
+});
+
+const app = express();
+app.use(express.json());
+
+app.post('/vehicles', (req, res) => {
+  const { model, type, mileage } = req.body;
+  db.query('INSERT INTO vehicles (model, type, mileage) VALUES (?, ?, ?)', [model, type, mileage], (err) => {
+    if (err) throw err;
+    res.send('Vehicle added');
+  });
+});
+```
+
+### **PostgreSQL (pg) Backend**
+```javascript
+const { Client } = require('pg');
+const express = require('express');
+
+const client = new Client({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'vehicles_db',
+  password: 'password',
+  port: 5432,
+});
+
+client.connect();
+const app = express();
+app.use(express.json());
+
+app.post('/vehicles', async (req, res) => {
+  const { model, type, mileage } = req.body;
+  await client.query('INSERT INTO vehicles (model, type, mileage) VALUES ($1, $2, $3)', [model, type, mileage]);
+  res.send('Vehicle added');
+});
+```
+
+### **CouchDB Backend (using Nano)**
+```javascript
+const nano = require('nano')('http://admin:password@localhost:5984');
+const express = require('express');
+const db = nano.db.use('vehicles');
+
+const app = express();
+app.use(express.json());
+
+app.post('/vehicles', async (req, res) => {
+  const response = await db.insert(req.body);
+  res.send(response);
+});
+
+app.get('/vehicles', async (req, res) => {
+  const { rows } = await db.list({ include_docs: true });
+  res.json(rows.map(row => row.doc));
+});
+```
+
+---
