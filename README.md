@@ -1,4 +1,26 @@
 Project structure:
+vehicle-management/
+│── backend/                   # Backend (Node.js, Express, JSON DB)
+│   │── server.js               # Main server file
+│   │── data/                   # Database (JSON files or SQLite)
+│   │── routes/                 # API routes
+│       │── vehicles.js         # Routes for managing vehicles
+│   │── controllers/            # Business logic
+│       │── vehicleController.js
+│   │── models/                 # Data models (optional if using a database)
+│       │── vehicleModel.js
+│   │── package.json            # Node.js dependencies
+│── frontend/                  # Frontend (Vanilla JS, HTML, CSS)
+│   │── index.html              # Main homepage
+│   │── vehicle.html            # Vehicle detail page
+│   │── css/                    # Stylesheets
+│   │   │── styles.css          # Main CSS file
+│   │── js/                     # JavaScript logic
+│   │   │── app.js              # Main logic
+│   │   │── api.js              # Fetch API functions
+│   │   │── filters.js          # Search & filter logic
+│   │── assets/                 # Images, icons
+│── README.md                   # Documentation
 
 Frontend
 
